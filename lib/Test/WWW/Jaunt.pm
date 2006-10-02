@@ -9,11 +9,11 @@ Test::WWW::Jaunt - A CGI-based testing platform.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.01_02
 
 =cut
 
-our $VERSION = '0.01_01';
+our $VERSION = '0.01_02';
 
 =head1 SYNOPSIS
 

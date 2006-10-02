@@ -9,6 +9,7 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Test/WWW/Jaunt.pm',
     build_requires => {
         'Test::More' => 0,
+	'Carp' => 0,
 	'CGI' => 0,
 	'Test::WWW::Mechanize' => 0,
 	'Test::HTML::Lint' => 0,

@@ -1,5 +1,6 @@
 .cvsignore
 Build.PL
+Makefile.PL
 Changes
 lib/Test/WWW/Jaunt.pm
 lib/Test/WWW/Jaunt/Step.pm
