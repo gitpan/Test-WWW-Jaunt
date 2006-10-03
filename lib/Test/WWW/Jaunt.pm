@@ -9,11 +9,11 @@ Test::WWW::Jaunt - A CGI-based testing platform.
 
 =head1 VERSION
 
-Version 0.01_02
+Version 0.01_03
 
 =cut
 
-our $VERSION = '0.01_02';
+our $VERSION = '0.01_03';
 
 =head1 SYNOPSIS
 
@@ -27,20 +27,55 @@ use Test::WWW::Jaunt::Step;
 use CGI qw(a b p br Tr td start_html hr end_html li ul ol base th *table);
 use base qw(Class::Accessor);
 use Carp;
-__PACKAGE__->mk_accessors(qw(query inrender sentheader suppressheader dbh));
+__PACKAGE__->mk_accessors(qw(query inrender sentheader suppressheader tester));
 
 =head1 FUNCTIONS
 
 =cut
+
+sub mkteststep ($$;$) {
+	my $module = shift;
+        my $test = shift;
+        my $name = shift;
+        my $method = lc $test;
+	$name = $method unless defined $name;
+	$name =~ s/\*$/$method/;
+        $method =~ s/\.t$//;
+        no strict 'refs';
+        return [ $name, sub {
+                my $self = shift;
+                $self->beginproctor;
+                eval {  
+                        $module = $module->run($method);
+                };
+                carp $@ if $@;
+                $self->endproctor;
+		$self->render($module->mech->response->content) if $module->mech->response;
+        } ];
+}
 
 sub new {
 	my $self = bless {}, shift;
 	local %_ = @_;
 	$self->{step} = [ map { new Test::WWW::Jaunt::Step($self, $_) } @{ $_{step} || [ $self->STEP ] } ];
 	$self->{table} = [ $self->TABLE ];
-	$self->{dbh} = $_{dbh} or croak "need database handle";
+	$self->tester($_{tester}) or croak "need tester";
 	$self->clear;
 	return $self;
+}
+
+sub reluri { shift->tester->reluri(@_) }
+
+sub dbh { shift->tester->dbh(@_) }
+
+sub home {
+	my $self = shift;
+	return;
+	$self->render(
+		a({ -href => "?home=" }, "home"), br,
+		a({ -href => "?databasepeek=" }, "peek in the database"), br,
+		a({ -href => "?testjaunt=" }, "take a test jaunt"), br,
+	);
 }
 
 sub databasepeek {
@@ -72,24 +107,6 @@ _END_
 		}
 		$self->render(CGI::end_table);
 	}
-}
-
-sub mkteststep ($$) {
-	my $module = shift;
-        my $name = shift;
-        my $method = lc $name;
-        $method =~ s/\.t$//;
-        no strict 'refs';
-        return [ $name, sub {
-                my $self = shift;
-                $self->beginproctor;
-                eval {  
-                        $module = $module->run($method);
-                };
-                carp $@ if $@;
-                $self->endproctor;
-		$self->render($module->mech->response->content) if $module->mech->response;
-        } ];
 }
 
 sub testjaunt {
@@ -204,9 +221,10 @@ sub handle {
 	$query = new CGI unless $query;
 	$self->query($query);
 	$self->clear;
-	if	(defined $query->param("databasepeek"))	{ $self->databasepeek }
+	if	(defined $query->param("home"))		{ $self->home }
+	elsif	(defined $query->param("databasepeek"))	{ $self->databasepeek }
 	elsif	(defined $query->param("testjaunt"))	{ $self->testjaunt }
-	else						{ $self->databasepeek }
+	else						{ $self->home }
 	$self->renderfooter if $self->inrender;
 }
 
@@ -252,6 +270,7 @@ _END_
 	print base({ -target => "_top"});
 	print CGI::div({ style => "float:left;" },
 		join " | ",
+		a({ -href => "?home=" }, "home"),
 		a({ -href => "?databasepeek=" }, "peek in the database"),
 		a({ -href => "?testjaunt=" }, "take a test jaunt"),
 	);

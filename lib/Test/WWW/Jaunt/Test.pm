@@ -15,7 +15,7 @@ use Scalar::Util qw(blessed);
 use Carp;
 use base qw(Class::Accessor);
 
-__PACKAGE__->mk_accessors(qw(lint mech basedir baseuri));
+__PACKAGE__->mk_accessors(qw(lint mech basedir baseuri dbh));
 
 sub new {
 	my $self = bless {}, shift;
@@ -25,6 +25,7 @@ sub new {
 	$basedir = dir $basedir unless blessed $basedir;
 	my $baseuri = $_{baseuri} or croak "need a baseuri";
 	$baseuri = new URI($baseuri) unless blessed $baseuri;
+	$self->dbh($_{dbh});
 
 	my $lint = new HTML::Lint( only_types => HTML::Lint::Error::STRUCTURE );
 	my $mech = new Test::WWW::Mechanize stack_depth => 1;
@@ -37,7 +38,7 @@ sub new {
 
 sub reluri {
 	my $self = shift;
-	return new_abs URI(shift, $self->baseuri);
+	return new_abs URI(dir($self->baseuri->path, @_), $self->baseuri);
 }
 
 sub run {
@@ -57,16 +58,19 @@ sub html_ok {
 
 	my $lint = $self->lint;
 	my $mech = $self->mech;
+	my $ok = 1;
 	unless (Test::HTML::Lint::html_ok($lint, $mech->content, new URI($mech->uri)->path . " has valid html")) {
 		my $basedir = $self->basedir;
 		$mech->save_content($basedir->file("lint.html"));
-		die $mech->uri ." does not have valid html";
+		undef $ok ;
+		return;
 	}
 	for my $form ($mech->forms) {
-		Test::Deep::cmp_deeply($form->enctype, Test::Deep::any("", "application/x-www-form-urlencoded",
+		$ok &&= Test::Deep::cmp_deeply($form->enctype, Test::Deep::any("", "application/x-www-form-urlencoded",
 			"multipart/form-data"),
 			"valid enctype in form for " . new URI($form->action)->path);
 	}
+	return $ok;
 }
 
 sub get_title_ok {
@@ -74,9 +78,10 @@ sub get_title_ok {
 	my ($url, $title, $message) = @_;
 
 	my $mech = $self->mech;
-	$mech->get_ok($url, $message || "get $url");
-	$mech->title_is($title, "found title \"$title\"");
-	$self->html_ok;
+	return unless $mech->get_ok($url, $message || "get $url");
+	return unless $mech->title_is($title, "found title \"$title\"");
+	return unless $self->html_ok;
+	return 1;
 }
 
 sub follow_link_title_ok {
@@ -84,11 +89,12 @@ sub follow_link_title_ok {
 	my ($link, $title, $message) = @_;
 
 	my $mech = $self->mech;
-	$mech->follow_link_ok($link, $message);
-	ref $title ?
+	return unless $mech->follow_link_ok($link, $message);
+	return unless ref $title ?
 		$mech->title_like($title, "found title \"$title\"") :
 		$mech->title_is($title, "found title \"$title\"");
-	$self->html_ok;
+	return unless $self->html_ok;
+	return 1;
 }
 
 sub submit_form {
@@ -96,7 +102,8 @@ sub submit_form {
 
 	my $mech = $self->mech;
 	$mech->submit_form(@_);
-	$self->html_ok;
+	return unless $self->html_ok;
+	return 1;
 }
 
 sub submit_form_upload {
@@ -104,7 +111,8 @@ sub submit_form_upload {
 
 	my $mech = $self->mech;
 	$mech->request(POST $mech->current_form->action, Content_Type => 'form-data', Content => shift);
-	$self->html_ok;
+	return unless $self->html_ok;
+	return 1;
 }
 
 1;
