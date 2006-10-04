@@ -1,6 +1,6 @@
 ---
 name: Test-WWW-Jaunt
-version: 0.01_03
+version: 0.01_04
 author:
   - Robert Krimen <robertkrimen@gmail.com>
 abstract: A CGI-based testing platform.
@@ -10,6 +10,7 @@ resources:
 build_requires:
   CGI: 0
   Carp: 0
+  Class::Accessor: 0
   LWP: 0
   Path::Class: 0
   Test::HTML::Lint: 0
@@ -19,7 +20,7 @@ build_requires:
 provides:
   Test::WWW::Jaunt:
     file: lib/Test/WWW/Jaunt.pm
-    version: 0.01_03
+    version: 0.01_04
   Test::WWW::Jaunt::Step:
     file: lib/Test/WWW/Jaunt/Step.pm
   Test::WWW::Jaunt::Test:

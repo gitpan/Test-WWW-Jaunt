@@ -1,7 +1,9 @@
+0.01_04 2006-10-02
+   + Added 'create_makefile_pl' to Build.PL and 'Class::Accessor' prerequisite.
 0.01_03 2006-10-02
-  + Decouple Test.pm and Jaunt.pm from Archie.
-  + Now displays version notice in the right hand corner.
-  + Some improvements to the automatic testing routine generator.
+   + Decouple Test.pm and Jaunt.pm from Archie.
+   + Now displays version notice in the right hand corner.
+   + Some improvements to the automatic testing routine generator.
 0.01_02 2006-10-02
    + Created 'Makefile.PL' in addition to 'Build.PL'
 0.01_01 2006-10-02

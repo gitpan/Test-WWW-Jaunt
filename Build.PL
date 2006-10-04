@@ -16,8 +16,11 @@ my $builder = Module::Build->new(
 	'URI' => 0,
 	'Path::Class' => 0,
 	'LWP' => 0,
+	'Class::Accessor' => 0,
     },
     add_to_cleanup      => [ 'Test-WWW-Jaunt-*' ],
+    create_makefile_pl => 'traditional',
+
 );
 
 $builder->create_build_script();

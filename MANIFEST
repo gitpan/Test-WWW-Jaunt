@@ -1,6 +1,5 @@
 .cvsignore
 Build.PL
-Makefile.PL
 Changes
 lib/Test/WWW/Jaunt.pm
 lib/Test/WWW/Jaunt/Step.pm
@@ -11,3 +10,4 @@ README
 t/00-load.t
 t/pod-coverage.t
 t/pod.t
+Makefile.PL
